@@ -9,8 +9,8 @@ EnvironmentFile=%h/.config/dsa-bot/env
 ExecStart=/ws/vishwsh2-sjc/dsaTelegram/.venv/bin/python -u /ws/vishwsh2-sjc/dsaTelegram/bot.py
 Restart=on-failure
 RestartSec=10
-StandardOutput=journal
-StandardError=journal
+StandardOutput=append:/ws/vishwsh2-sjc/dsaTelegram/logs/bot.log
+StandardError=append:/ws/vishwsh2-sjc/dsaTelegram/logs/bot.err
 
 [Install]
 WantedBy=default.target

@@ -50,11 +50,17 @@ systemctl --user daemon-reload
 systemctl --user enable --now dsa-bot.service
 ```
 
-Check status and logs:
+Check status:
 
 ```bash
 systemctl --user status dsa-bot.service
-journalctl --user -u dsa-bot.service -f
+```
+
+Logs are written to files:
+
+```bash
+tail -f /ws/vishwsh2-sjc/dsaTelegram/logs/bot.log
+tail -f /ws/vishwsh2-sjc/dsaTelegram/logs/bot.err
 ```
 
 ### Note about user services and logout
