@@ -50,3 +50,6 @@ test_config.py
 # OS
 .DS_Store
 Thumbs.db
+
+# Project files
+prompt.md
