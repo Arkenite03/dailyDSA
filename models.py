@@ -28,7 +28,12 @@ class UserPrefs:
     """User preferences stored in memory."""
     user_id: int
     difficulty: Optional[str] = None  # 'easy', 'medium', 'hard', or None for default
+    schedule_time: Optional[str] = None  # Time in HH:MM format (24-hour), None for default
 
     def get_difficulty(self) -> Optional[str]:
         """Get user's preferred difficulty or None for default."""
         return self.difficulty if self.difficulty != 'default' else None
+    
+    def get_schedule_time(self) -> str:
+        """Get user's preferred schedule time or default."""
+        return self.schedule_time if self.schedule_time else "11:00"

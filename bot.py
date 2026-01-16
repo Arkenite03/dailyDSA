@@ -44,6 +44,7 @@ def main() -> None:
     application.add_handler(CommandHandler("today", handlers.today))
     application.add_handler(CommandHandler("another", handlers.another))
     application.add_handler(CommandHandler("level", handlers.level))
+    application.add_handler(CommandHandler("settime", handlers.settime))
     application.add_handler(handlers.get_conversation_handler())
     
     # Register callback query handler for problem action buttons

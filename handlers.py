@@ -94,6 +94,11 @@ class Handlers:
         # Initialize user preferences if not exists
         if user_id not in user_prefs:
             user_prefs[user_id] = UserPrefs(user_id=user_id)
+            # Schedule job for new user
+            if hasattr(self, 'scheduler') and self.scheduler:
+                self.scheduler.schedule_new_user(user_id)
+        
+        schedule_time = user_prefs[user_id].get_schedule_time()
         
         welcome_message = (
             f"👋 Hello {user_name}!\n\n"
@@ -104,9 +109,10 @@ class Handlers:
             "/today - Get today's DSA problem\n"
             "/another - Get another random problem\n"
             "/level [default|easy|medium|hard] - Set difficulty preference\n"
+            "/settime [HH:MM] - Set daily problem delivery time\n"
             "/add - Add a new problem to the database\n\n"
             "💡 *Features:*\n"
-            "• Daily problems at 11:00 AM IST\n"
+            f"• Daily problems at {schedule_time} IST (customize with /settime)\n"
             "• Interactive buttons: ✅ Done, ⏰ Later, ❌ Discard\n"
             "• Smart tracking: Won't repeat problems you've completed!\n\n"
             "💡 *Tip:* Use the buttons below each problem to track your progress!"
@@ -251,6 +257,73 @@ class Handlers:
             f"✅ Difficulty preference set to: *{difficulty.capitalize()}*",
             parse_mode='Markdown'
         )
+    
+    async def settime(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Handle /settime command - set daily problem delivery time."""
+        user_id = update.effective_user.id
+        args = context.args
+        
+        # Initialize user preferences if not exists
+        if user_id not in user_prefs:
+            user_prefs[user_id] = UserPrefs(user_id=user_id)
+        
+        if not args:
+            # Show current time preference
+            current_time = user_prefs[user_id].get_schedule_time()
+            message = (
+                f"⏰ Your current daily problem time: *{current_time}* (IST)\n\n"
+                "To change it, use:\n"
+                "/settime HH:MM\n\n"
+                "Examples:\n"
+                "/settime 09:00  (9:00 AM)\n"
+                "/settime 14:30  (2:30 PM)\n"
+                "/settime 18:00  (6:00 PM)\n\n"
+                "💡 *Note:* Time is in 24-hour format (IST timezone)"
+            )
+            await update.message.reply_text(message, parse_mode='Markdown')
+            return
+        
+        time_str = args[0].strip()
+        
+        # Validate time format (HH:MM)
+        try:
+            parts = time_str.split(':')
+            if len(parts) != 2:
+                raise ValueError("Invalid format")
+            
+            hour = int(parts[0])
+            minute = int(parts[1])
+            
+            if hour < 0 or hour > 23:
+                raise ValueError("Hour must be between 0 and 23")
+            if minute < 0 or minute > 59:
+                raise ValueError("Minute must be between 0 and 59")
+            
+            # Format time with leading zeros
+            formatted_time = f"{hour:02d}:{minute:02d}"
+            
+            # Update user preference
+            old_time = user_prefs[user_id].get_schedule_time()
+            user_prefs[user_id].schedule_time = formatted_time
+            
+            # Reschedule the user's job if scheduler is available
+            if hasattr(self, 'scheduler') and self.scheduler:
+                self.scheduler.reschedule_user_job(user_id, formatted_time)
+            
+            await update.message.reply_text(
+                f"✅ Daily problem time updated!\n\n"
+                f"Old time: *{old_time}*\n"
+                f"New time: *{formatted_time}* (IST)\n\n"
+                f"Your daily problem will be sent at {formatted_time} IST starting tomorrow.",
+                parse_mode='Markdown'
+            )
+            
+        except ValueError as e:
+            await update.message.reply_text(
+                f"❌ Invalid time format: {time_str}\n\n"
+                "Please use 24-hour format: HH:MM\n"
+                "Examples: 09:00, 14:30, 18:00"
+            )
     
     # /add command conversation handlers
     async def add_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -397,8 +470,68 @@ class Handlers:
             fallbacks=[self.add_cancel],
         )
     
+    async def send_daily_problem_to_user(self, bot, user_id: int) -> None:
+        """Send daily problem to a specific user.
+        
+        Args:
+            bot: Bot instance
+            user_id: Telegram user ID
+        """
+        try:
+            # Initialize user tracking if needed
+            if user_id not in user_completed_problems:
+                user_completed_problems[user_id] = set()
+            if user_id not in user_recent_problems:
+                user_recent_problems[user_id] = []
+            
+            # Get user's difficulty preference
+            difficulty = None
+            if user_id in user_prefs:
+                difficulty = user_prefs[user_id].get_difficulty()
+            
+            excluded_ids = self._get_excluded_problem_ids(user_id)
+            problem = self.sheets.get_random_problem(difficulty, exclude_ids=excluded_ids)
+            
+            if problem:
+                # Track this problem as recently sent
+                user_recent_problems[user_id].append(problem.id)
+                # Keep only last 20 recent problems
+                if len(user_recent_problems[user_id]) > 20:
+                    user_recent_problems[user_id] = user_recent_problems[user_id][-20:]
+                
+                message = (
+                    "🌅 *Good Morning!*\n\n"
+                    "Here's your daily DSA problem:\n\n"
+                    f"{problem}\n\n"
+                    "💪 Have a great day of coding!"
+                )
+                keyboard = self._create_problem_keyboard(problem.id)
+                await bot.send_message(
+                    chat_id=user_id,
+                    text=message,
+                    parse_mode='Markdown',
+                    reply_markup=keyboard
+                )
+            else:
+                logger.warning(f"No new problems available for user {user_id}")
+                # Send a message to user
+                try:
+                    await bot.send_message(
+                        chat_id=user_id,
+                        text=(
+                            "🌅 *Good Morning!*\n\n"
+                            "You've completed all available problems in your difficulty range! 🎉\n\n"
+                            "Try changing your difficulty with /level or add more problems with /add"
+                        ),
+                        parse_mode='Markdown'
+                    )
+                except Exception as e:
+                    logger.error(f"Error sending no-problems message to user {user_id}: {e}")
+        except Exception as e:
+            logger.error(f"Error sending daily problem to user {user_id}: {e}")
+    
     async def send_daily_problem(self, context_or_bot) -> None:
-        """Send daily problem to all registered users.
+        """Send daily problem to all registered users (legacy method, kept for compatibility).
         
         Args:
             context_or_bot: Either a ContextTypes.DEFAULT_TYPE or a Bot instance
@@ -417,51 +550,4 @@ class Handlers:
             return
         
         for user_id in users:
-            try:
-                # Initialize user tracking if needed
-                if user_id not in user_completed_problems:
-                    user_completed_problems[user_id] = set()
-                if user_id not in user_recent_problems:
-                    user_recent_problems[user_id] = []
-                
-                difficulty = user_prefs[user_id].get_difficulty()
-                excluded_ids = self._get_excluded_problem_ids(user_id)
-                problem = self.sheets.get_random_problem(difficulty, exclude_ids=excluded_ids)
-                
-                if problem:
-                    # Track this problem as recently sent
-                    user_recent_problems[user_id].append(problem.id)
-                    # Keep only last 20 recent problems
-                    if len(user_recent_problems[user_id]) > 20:
-                        user_recent_problems[user_id] = user_recent_problems[user_id][-20:]
-                    
-                    message = (
-                        "🌅 *Good Morning!*\n\n"
-                        "Here's your daily DSA problem:\n\n"
-                        f"{problem}\n\n"
-                        "💪 Have a great day of coding!"
-                    )
-                    keyboard = self._create_problem_keyboard(problem.id)
-                    await bot.send_message(
-                        chat_id=user_id,
-                        text=message,
-                        parse_mode='Markdown',
-                        reply_markup=keyboard
-                    )
-                else:
-                    logger.warning(f"No new problems available for user {user_id}")
-                    # Optionally send a message to user
-                    try:
-                        await bot.send_message(
-                            chat_id=user_id,
-                            text=(
-                                "🌅 *Good Morning!*\n\n"
-                                "You've completed all available problems in your difficulty range! 🎉\n\n"
-                                "Try changing your difficulty with /level or add more problems with /add"
-                            ),
-                            parse_mode='Markdown'
-                        )
-                    except Exception as e:
-                        logger.error(f"Error sending no-problems message to user {user_id}: {e}")
-            except Exception as e:
-                logger.error(f"Error sending daily problem to user {user_id}: {e}")
+            await self.send_daily_problem_to_user(bot, user_id)

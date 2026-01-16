@@ -4,7 +4,8 @@ A lightweight Telegram bot that sends daily Data Structures and Algorithms (DSA)
 
 ## Features
 
-- 📅 **Daily Problems**: Automatically sends one random DSA problem every day at 11:00 AM IST
+- 📅 **Daily Problems**: Automatically sends one random DSA problem daily (default 11:00 AM IST, customizable)
+- ⏰ **Customizable Schedule**: Set your preferred delivery time with `/settime` command
 - 🎲 **Manual Fetching**: Get problems on-demand with `/today` or `/another`
 - ⚙️ **Difficulty Filtering**: Set your preferred difficulty level (easy, medium, hard)
 - ✅ **Interactive Tracking**: Mark problems as Done/Later/Discard with inline buttons
@@ -173,7 +174,17 @@ The bot will start polling for updates and schedule the daily problem delivery.
 - `/today` - Get today's DSA problem (respects your difficulty preference)
 - `/another` - Get another random problem
 - `/level [default|easy|medium|hard]` - Set your preferred difficulty level
+- `/settime [HH:MM]` - Set your daily problem delivery time (24-hour format, IST timezone)
 - `/add` - Add a new problem to the database (interactive flow)
+
+### Examples
+
+```bash
+/settime 09:00   # Set to 9:00 AM IST
+/settime 14:30   # Set to 2:30 PM IST
+/settime 18:00   # Set to 6:00 PM IST
+/settime         # Show current time setting
+```
 
 ## Project Structure
 
