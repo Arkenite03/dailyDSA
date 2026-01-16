@@ -1,0 +1,19 @@
+[Unit]
+Description=DSA Telegram Bot
+After=network.target
+
+[Service]
+Type=simple
+User=YOUR_USERNAME
+WorkingDirectory=/path/to/dsaTelegram
+Environment="TELEGRAM_BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN_HERE"
+Environment="GOOGLE_SHEETS_ID=YOUR_GOOGLE_SHEETS_ID_HERE"
+Environment="GOOGLE_CREDENTIALS_FILE=/path/to/dsaTelegram/credentials.json"
+ExecStart=/usr/bin/python3 /path/to/dsaTelegram/bot.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

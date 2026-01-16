@@ -1,0 +1,16 @@
+#!/bin/bash
+# Setup script for DSA Telegram Bot
+# Run this script to set environment variables for the current session
+# 
+# Copy this file to setup_env.sh and add your actual tokens
+
+export TELEGRAM_BOT_TOKEN="YOUR_TELEGRAM_BOT_TOKEN_HERE"
+export GOOGLE_SHEETS_ID="YOUR_GOOGLE_SHEETS_ID_HERE"
+export GOOGLE_CREDENTIALS_FILE="credentials.json"
+
+echo "✓ Environment variables set!"
+echo "TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:0:20}..."
+echo "GOOGLE_SHEETS_ID: $GOOGLE_SHEETS_ID"
+echo ""
+echo "To make these permanent, add them to your ~/.zshrc or ~/.bashrc file"
+echo "Or run: source setup_env.sh before starting the bot"

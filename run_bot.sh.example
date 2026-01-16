@@ -1,0 +1,29 @@
+#!/bin/bash
+# Run script for DSA Telegram Bot
+# This script sets environment variables and starts the bot
+# 
+# Copy this file to run_bot.sh and add your actual tokens
+
+# Set environment variables
+export TELEGRAM_BOT_TOKEN="YOUR_TELEGRAM_BOT_TOKEN_HERE"
+export GOOGLE_SHEETS_ID="YOUR_GOOGLE_SHEETS_ID_HERE"
+export GOOGLE_CREDENTIALS_FILE="credentials.json"
+
+# Check if credentials.json exists
+if [ ! -f "credentials.json" ]; then
+    echo "❌ Error: credentials.json not found!"
+    echo "Please ensure credentials.json is in the project directory."
+    exit 1
+fi
+
+# Check if Python is available
+if ! command -v python3 &> /dev/null; then
+    echo "❌ Error: python3 not found!"
+    exit 1
+fi
+
+echo "🚀 Starting DSA Telegram Bot..."
+echo ""
+
+# Run the bot
+python3 bot.py

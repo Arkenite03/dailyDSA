@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+"""Test script to verify bot configuration."""
+
+import os
+import sys
+
+# Set environment variables - REPLACE WITH YOUR ACTUAL VALUES
+os.environ['TELEGRAM_BOT_TOKEN'] = 'YOUR_TELEGRAM_BOT_TOKEN_HERE'
+os.environ['GOOGLE_SHEETS_ID'] = 'YOUR_GOOGLE_SHEETS_ID_HERE'
+
+try:
+    from config import Config
+    print("✓ Config module imported")
+    
+    Config.validate()
+    print("✓ Configuration validated")
+    
+    # Test Google Sheets connection
+    try:
+        from sheets import SheetsService
+        sheets = SheetsService()
+        problems = sheets.get_all_problems()
+        print(f"✓ Google Sheets connection successful!")
+        print(f"  Found {len(problems)} problems in the database")
+        if problems:
+            print(f"  Sample problem: {problems[0].title}")
+    except Exception as e:
+        print(f"✗ Google Sheets connection failed: {e}")
+        sys.exit(1)
+    
+    # Test Telegram bot token format
+    if Config.TELEGRAM_BOT_TOKEN and ':' in Config.TELEGRAM_BOT_TOKEN:
+        print("✓ Telegram bot token format looks valid")
+    else:
+        print("✗ Telegram bot token format invalid")
+        sys.exit(1)
+    
+    print("\n✅ All configuration tests passed!")
+    print("\nYou can now run the bot with: python3 bot.py")
+    
+except ImportError as e:
+    print(f"✗ Import error: {e}")
+    print("Please install dependencies: pip3 install -r requirements.txt")
+    sys.exit(1)
+except Exception as e:
+    print(f"✗ Error: {e}")
+    sys.exit(1)
