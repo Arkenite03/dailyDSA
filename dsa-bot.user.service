@@ -1,0 +1,17 @@
+[Unit]
+Description=DSA Telegram Bot (user service)
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/ws/vishwsh2-sjc/dsaTelegram
+EnvironmentFile=%h/.config/dsa-bot/env
+ExecStart=/ws/vishwsh2-sjc/dsaTelegram/.venv/bin/python -u /ws/vishwsh2-sjc/dsaTelegram/bot.py
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target
+

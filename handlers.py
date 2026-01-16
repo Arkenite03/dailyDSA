@@ -5,7 +5,7 @@ import time
 from typing import Dict, Optional, Set
 
 from telegram import Bot, Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ContextTypes, ConversationHandler, CallbackQueryHandler
+from telegram.ext import ContextTypes, ConversationHandler, CallbackQueryHandler, CommandHandler, MessageHandler, filters
 
 from models import Problem, UserPrefs
 from sheets import SheetsService
@@ -314,7 +314,7 @@ class Handlers:
                 f"✅ Daily problem time updated!\n\n"
                 f"Old time: *{old_time}*\n"
                 f"New time: *{formatted_time}* (IST)\n\n"
-                f"Your daily problem will be sent at {formatted_time} IST starting tomorrow.",
+                f"Your daily problem will be sent at {formatted_time} IST.",
                 parse_mode='Markdown'
             )
             
@@ -460,14 +460,14 @@ class Handlers:
     def get_conversation_handler(self) -> ConversationHandler:
         """Get the conversation handler for /add command."""
         return ConversationHandler(
-            entry_points=[self.add_start],
+            entry_points=[CommandHandler("add", self.add_start)],
             states={
-                TITLE: [self.add_title],
-                DIFFICULTY: [self.add_difficulty],
-                TOPIC: [self.add_topic],
-                URL: [self.add_url],
+                TITLE: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.add_title)],
+                DIFFICULTY: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.add_difficulty)],
+                TOPIC: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.add_topic)],
+                URL: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.add_url)],
             },
-            fallbacks=[self.add_cancel],
+            fallbacks=[CommandHandler("cancel", self.add_cancel)],
         )
     
     async def send_daily_problem_to_user(self, bot, user_id: int) -> None:
