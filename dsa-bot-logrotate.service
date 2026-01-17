@@ -1,0 +1,7 @@
+[Unit]
+Description=Rotate DSA bot logs
+
+[Service]
+Type=oneshot
+ExecStart=/ws/vishwsh2-sjc/dsaTelegram/rotate_logs.sh
+

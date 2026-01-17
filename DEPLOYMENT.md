@@ -63,6 +63,26 @@ tail -f /ws/vishwsh2-sjc/dsaTelegram/logs/bot.log
 tail -f /ws/vishwsh2-sjc/dsaTelegram/logs/bot.err
 ```
 
+### Log rotation (no sudo)
+
+This repo includes a simple size-based log rotation script and user timer.
+It runs daily, rotates when a log exceeds 10 MB, and keeps 5 old copies.
+
+```bash
+chmod +x /ws/vishwsh2-sjc/dsaTelegram/rotate_logs.sh
+cp /ws/vishwsh2-sjc/dsaTelegram/dsa-bot-logrotate.service ~/.config/systemd/user/
+cp /ws/vishwsh2-sjc/dsaTelegram/dsa-bot-logrotate.timer ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now dsa-bot-logrotate.timer
+```
+
+To adjust limits:
+
+```bash
+export MAX_BYTES=$((20 * 1024 * 1024))  # 20 MB
+export KEEP=10
+```
+
 ### Note about user services and logout
 
 On most systems, `systemd --user` stops when you log out unless user lingering

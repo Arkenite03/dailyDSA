@@ -1,0 +1,10 @@
+[Unit]
+Description=Rotate DSA bot logs hourly
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+
